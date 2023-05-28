@@ -1,16 +1,26 @@
 from __future__ import annotations
 from heapq import heappush, heappop
 from enum import Enum
-from typing import NamedTuple, Optional, Callable, Tuple
+from typing import NamedTuple, Optional, Callable, Tuple, List
 import random
 
 
 class Node:
-    def __init__(self, state: MazeLocation, parent: Node, cost = 0, heuristic = 0):
+    def __init__(self, state: MazeLocation, parent: Node, cost=0, heuristic=0):
         self.state = state
         self.parent = parent
         self.cost = cost
         self.heuristic = heuristic
+
+    @property
+    def history_of_states(self) -> List[MazeLocation]:
+        history: List[Node] = [self.state]
+        node = self
+        while not node.parent is None:
+            history.append(node.parent.state)
+            node = node.parent
+
+        return history
 
     def __lt__(self, other: Node) -> bool:
         return (self.cost + self.heuristic) < (other.cost + other.heuristic)
@@ -30,6 +40,7 @@ class Stack:
     def pop(self):
         return self._container.pop()
 
+
 class Queue:
     def __init__(self):
         self._container: list = []
@@ -40,10 +51,10 @@ class Queue:
 
     def push(self, item):
         self._container.append(item)
-    
+
     def pop(self):
         return self._container.pop(0)
-    
+
     def __repr__(self):
         return str(self._container)
 
@@ -51,7 +62,7 @@ class Queue:
 class PriorityQueue:
     def __init__(self):
         self._container: list = []
-    
+
     @property
     def empty(self):
         return not self._container
@@ -65,6 +76,7 @@ class PriorityQueue:
     def __repr__(self):
         return str(self._container)
 
+
 class Cell(Enum):
     EMPTY = " "
     BLOCKED = "X"
@@ -72,12 +84,14 @@ class Cell(Enum):
     START = "S"
     GOAL = "G"
 
+
 class MazeLocation(NamedTuple):
     row: int
     column: int
 
+
 class Maze:
-    def __init__(self, rows: int = 10, columns: int = 10, sparseness: float = 0.2, 
+    def __init__(self, rows: int = 10, columns: int = 10, sparseness: float = 0.2,
                  start: MazeLocation = MazeLocation(9, 9), goal: MazeLocation = MazeLocation(0, 0)):
         self._rows = rows
         self._columns = columns
@@ -85,7 +99,8 @@ class Maze:
         self.start = start
         self.goal = goal
 
-        self._grid: list[list[Cell]] = [[Cell.EMPTY for column in range(columns)] for row in range(rows)]
+        self._grid: list[list[Cell]] = [
+            [Cell.EMPTY for column in range(columns)] for row in range(rows)]
         self._randomly_fill(self._rows, self._columns, self._sparseness)
 
         self._grid[start.row][start.column] = Cell.START
@@ -105,7 +120,7 @@ class Maze:
         for row in range(self._rows):
             output += "".join([c.value for c in self._grid[row]]) + "\n"
         return output
-    
+
     def successors(self, ml: MazeLocation):
         locations = []
         if ml.row + 1 < self._rows and self._grid[ml.column][ml.row + 1] != Cell.BLOCKED:
@@ -122,21 +137,23 @@ class Maze:
     def mark(self, path: list[MazeLocation]):
         for ml in path:
             self._grid[ml.column][ml.row] = Cell.PATH
-        
+
         self._grid[self.start.row][self.start.column] = Cell.START
         self._grid[self.goal.row][self.goal.column] = Cell.GOAL
 
     def clear(self, path: list[MazeLocation]):
         for ml in path:
             self._grid[ml.column][ml.row] = Cell.EMPTY
-        
+
         self._grid[self.start.row][self.start.column] = Cell.START
         self._grid[self.goal.row][self.goal.column] = Cell.GOAL
+
 
 def manhattan_distance(ml2: MazeLocation):
     def inner(ml1):
         return (ml1.column - ml2.column) + (ml1.row - ml2.row)
     return inner
+
 
 def bfs(successors: Callable, goal_test: Callable, initial: Node) -> Optional[Node]:
     explored: set = {initial}
@@ -156,6 +173,7 @@ def bfs(successors: Callable, goal_test: Callable, initial: Node) -> Optional[No
             if child not in explored:
                 explored.add(child)
                 frontier.push(Node(child, current_node))
+
 
 def count_bfs(successors: Callable, goal_test: Callable, initial: Node) -> Tuple[Optional[Node], int]:
     explored: set = {initial}
@@ -178,8 +196,9 @@ def count_bfs(successors: Callable, goal_test: Callable, initial: Node) -> Tuple
             if child not in explored:
                 explored.add(child)
                 frontier.push(Node(child, current_node))
-    
+
     return None, counter
+
 
 def dfs(successors: Callable, goal_test: Callable, initial: Node) -> Optional[Node]:
     explored: set = {initial}
@@ -201,6 +220,7 @@ def dfs(successors: Callable, goal_test: Callable, initial: Node) -> Optional[No
                 frontier.push(Node(child, current_node))
 
     return None
+
 
 def count_dfs(successors: Callable, goal_test: Callable, initial: Node) -> Tuple[Optional[Node], int]:
     explored: set = {initial}
@@ -226,6 +246,7 @@ def count_dfs(successors: Callable, goal_test: Callable, initial: Node) -> Tuple
 
     return None, counter
 
+
 def astar(successors: Callable, goal_test: Callable, initial: Node, heuristic: Callable) -> Optional[Node]:
     explored: set = {initial}
     frontier: PriorityQueue = PriorityQueue()
@@ -243,9 +264,11 @@ def astar(successors: Callable, goal_test: Callable, initial: Node, heuristic: C
         for child in childs:
             if child not in explored:
                 explored.add(child)
-                frontier.push(Node(child, current_node, current_node.cost + 1, heuristic(child)))
+                frontier.push(Node(child, current_node,
+                              current_node.cost + 1, heuristic(child)))
 
     return None
+
 
 def count_astar(successors: Callable, goal_test: Callable, initial: Node, heuristic: Callable) -> Tuple[Optional[Node], int]:
     explored: set = {initial}
@@ -267,9 +290,11 @@ def count_astar(successors: Callable, goal_test: Callable, initial: Node, heuris
         for child in childs:
             if child not in explored:
                 explored.add(child)
-                frontier.push(Node(child, current_node, current_node.cost + 1, heuristic(child)))
+                frontier.push(Node(child, current_node,
+                              current_node.cost + 1, heuristic(child)))
 
     return None, counter
+
 
 def node_to_path(node: Node) -> list[MazeLocation]:
     path: list[MazeLocation] = []
@@ -300,7 +325,8 @@ if __name__ == "__main__":
         print("dfs:\n" + str(maze))
         maze.clear(path)
 
-    node = astar(maze.successors, maze.goal_test, maze.start, manhattan_distance(maze.goal))
+    node = astar(maze.successors, maze.goal_test,
+                 maze.start, manhattan_distance(maze.goal))
     if node is None:
         print("no path found, maze:\n" + str(maze))
     else:
@@ -308,4 +334,3 @@ if __name__ == "__main__":
         maze.mark(path)
         print("astar:\n" + str(maze))
         maze.clear(path)
-

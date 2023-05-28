@@ -1,10 +1,9 @@
+from generic_search import Queue, Node
 import logging
 import os
 from typing import List, Tuple, Dict, Optional, Callable
 import sys
 sys.path.insert(0, "C:\Programmieren\VS_Code\pythonAlgorithmusÜbungen")
-if True:
-    from kap3.csp import Node, Queue
 
 
 def setup_logging(name: str) -> logging.Logger:
@@ -30,7 +29,6 @@ Coordinate = Tuple[int, int]
 
 
 def count_bfs(successors: Callable, goal_test: Callable, initial: Coordinate) -> Tuple[Optional[Node], int]:
-    explored: set = {initial}
     frontier: Queue = Queue()
 
     frontier.push(Node(initial, None))
@@ -38,14 +36,11 @@ def count_bfs(successors: Callable, goal_test: Callable, initial: Coordinate) ->
     counter: int = 0
     while not frontier.empty:
         current_node: Node = frontier.pop()
+        history = current_node.history_of_states
 
-        add: int = 1
-        for _ in range(4):
-            if current_node.parent == None:
-                add = 0
-                break
-
-        counter += add
+        counter += 1 if len(history) >= 4 else 0
+        if len(history) > 9:
+            raise Exception()
 
         if goal_test(current_node.state):
             return current_node, counter
@@ -53,25 +48,33 @@ def count_bfs(successors: Callable, goal_test: Callable, initial: Coordinate) ->
         childs: list[Coordinate] = successors(current_node.state)
 
         for child in childs:
-            if child not in explored:
-                explored.add(child)
+            if child not in history:
+                # top left to bottom right
+                if current_node.state == (0, 0) and child == (2, 2) and (1, 1) not in history:
+                    continue
+                # bottom right to top left
+                if current_node.state == (2, 2) and child == (0, 0) and (1, 1) not in history:
+                    continue
+                # top right to bottom left
+                if current_node.state == (2, 0) and child == (0, 2) and (1, 1) not in history:
+                    continue
+                # bottom left to top right
+                if current_node.state == (0, 2) and child == (2, 0) and (1, 1) not in history:
+                    continue
+                # rows
+                if current_node.state[0] == 0 and child[0] == 2 and current_node.state[1] == child[1]:
+                    continue
+                # columns
+                if current_node.state[1] == 0 and child[1] == 2 and current_node.state[0] == child[0]:
+                    continue
+
                 frontier.push(Node(child, current_node))
 
     return None, counter
 
 
 def successors(c: Coordinate):
-    succ: List[Coordinate] = []
-    if c[0] + 1 < 3:
-        succ.append((c[0] + 1, c[1]))
-    if c[0] - 1 >= 0:
-        succ.append((c[0] - 1, c[1]))
-    if c[1] + 1 < 3:
-        succ.append((c[0], c[1] + 1))
-    if c[1] - 1 >= 0:
-        succ.append((c[0], c[1] - 1))
-
-    return succ
+    return [(0, 0), (0, 1), (0, 2), (1, 0), (1, 1), (1, 2), (2, 0), (2, 1), (2, 2)]
 
 
 def main():
