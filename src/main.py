@@ -28,7 +28,7 @@ def setup_logging(name: str) -> logging.Logger:
 Coordinate = Tuple[int, int]
 
 
-def count_bfs(successors: Callable, goal_test: Callable, initial: Coordinate) -> Tuple[Optional[Node], int]:
+def count_bfs(successors: Callable, initial: Coordinate) -> Tuple[Optional[Node], int]:
     frontier: Queue = Queue()
 
     frontier.push(Node(initial, None))
@@ -41,9 +41,6 @@ def count_bfs(successors: Callable, goal_test: Callable, initial: Coordinate) ->
         counter += 1 if len(history) >= 4 else 0
         if len(history) > 9:
             raise Exception()
-
-        if goal_test(current_node.state):
-            return current_node, counter
 
         childs: list[Coordinate] = successors(current_node.state)
 
@@ -62,10 +59,16 @@ def count_bfs(successors: Callable, goal_test: Callable, initial: Coordinate) ->
                 if current_node.state == (0, 2) and child == (2, 0) and (1, 1) not in history:
                     continue
                 # rows
-                if current_node.state[0] == 0 and child[0] == 2 and current_node.state[1] == child[1]:
+                if current_node.state[0] == 0 and child[0] == 2 and current_node.state[1] == child[1] and (1, child[1]) not in history:
                     continue
                 # columns
-                if current_node.state[1] == 0 and child[1] == 2 and current_node.state[0] == child[0]:
+                if current_node.state[1] == 0 and child[1] == 2 and current_node.state[0] == child[0] and (child[0], 1) not in history:
+                    continue
+                # rows
+                if current_node.state[0] == 2 and child[0] == 0 and current_node.state[1] == child[1] and (1, child[1]) not in history:
+                    continue
+                # columns
+                if current_node.state[1] == 2 and child[1] == 0 and current_node.state[0] == child[0] and (child[0], 1) not in history:
                     continue
 
                 frontier.push(Node(child, current_node))
@@ -78,11 +81,11 @@ def successors(c: Coordinate):
 
 
 def main():
-    count: int = count_bfs(successors, lambda x: False, (0, 0))[1] * 4
+    count: int = count_bfs(successors, (0, 0))[1] * 4
     print(f"count vertecies: {count}")
-    count += count_bfs(successors, lambda x: False, (1, 0))[1] * 4
+    count += count_bfs(successors, (1, 0))[1] * 4
     print(f"count vertecies + edges : {count}")
-    count += count_bfs(successors, lambda x: False, (1, 1))[1]
+    count += count_bfs(successors, (1, 1))[1]
 
     print(f"final count: {count}")
 
