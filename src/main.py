@@ -64,10 +64,10 @@ def count_bfs(successors: Callable, initial: Coordinate) -> Tuple[Optional[Node]
                 # columns
                 if current_node.state[1] == 0 and child[1] == 2 and current_node.state[0] == child[0] and (child[0], 1) not in history:
                     continue
-                # rows
+                # rows inverse
                 if current_node.state[0] == 2 and child[0] == 0 and current_node.state[1] == child[1] and (1, child[1]) not in history:
                     continue
-                # columns
+                # columns inverse
                 if current_node.state[1] == 2 and child[1] == 0 and current_node.state[0] == child[0] and (child[0], 1) not in history:
                     continue
 
