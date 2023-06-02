@@ -2,8 +2,6 @@ from generic_search import Queue, Node
 import logging
 import os
 from typing import List, Tuple, Dict, Optional, Callable
-import sys
-sys.path.insert(0, "C:\Programmieren\VS_Code\pythonAlgorithmusÜbungen")
 
 
 def setup_logging(name: str) -> logging.Logger:
